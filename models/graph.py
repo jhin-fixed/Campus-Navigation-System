@@ -78,6 +78,7 @@ class Graph:
             self.adjacency[to_id] = []
 
         self.adjacency[from_id].append((to_id, weight))
+        self.adjacency[to_id].append((from_id, weight))
 
 
     def get_node(self, node_id: int) -> Optional[Node]:
