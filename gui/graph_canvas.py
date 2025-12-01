@@ -5,6 +5,7 @@ from typing import List, Tuple, Optional
 from models.graph import Graph
 import config
 
+# TODO: Graph appears stretched, need to check scaling logic
 
 class GraphCanvas(QWidget):
 
