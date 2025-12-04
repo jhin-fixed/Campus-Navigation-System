@@ -1,0 +1,37 @@
+{
+  "nodes": [
+    { "id": 0, "name": "Entrance", "x": 120, "y": 60 },
+    { "id": 5, "name": "Old E. Bldg", "x": 350, "y": 220 },
+    { "id": 16, "name": "Main Gym", "x": 630, "y": 240 },
+    { "id": 17, "name": "Junction", "x": 450, "y": 260 },
+    { "id": 18, "name": "Culinary Bldg", "x": 380, "y": 300 },
+    { "id": 19, "name": "RO Office", "x": 420, "y": 340 },
+    { "id": 20, "name": "Cafeteria", "x": 520, "y": 300 },
+    { "id": 41, "name": "Sci Com", "x": 700, "y": 320 },
+    { "id": 42, "name": "Eng Com 1", "x": 450, "y": 380 }
+  ],
+  "edges": [
+    { "from": 0, "to": 20, "weight": 40 },
+    { "from": 0, "to": 42, "weight": 45 },
+    { "from": 5, "to": 16, "weight": 35 },
+    { "from": 5, "to": 18, "weight": 30 },
+    { "from": 16, "to": 20, "weight": 25 },
+    { "from": 16, "to": 41, "weight": 40 },
+    { "from": 17, "to": 16, "weight": 20 },
+    { "from": 17, "to": 18, "weight": 25 },
+    { "from": 17, "to": 20, "weight": 20 },
+    { "from": 18, "to": 5, "weight": 30 },
+    { "from": 18, "to": 19, "weight": 25 },
+    { "from": 18, "to": 20, "weight": 20 },
+    { "from": 19, "to": 18, "weight": 25 },
+    { "from": 19, "to": 20, "weight": 30 },
+    { "from": 19, "to": 42, "weight": 35 },
+    { "from": 20, "to": 16, "weight": 25 },
+    { "from": 20, "to": 18, "weight": 20 },
+    { "from": 20, "to": 19, "weight": 30 },
+    { "from": 20, "to": 42, "weight": 35 },
+    { "from": 41, "to": 16, "weight": 40 },
+    { "from": 42, "to": 19, "weight": 35 },
+    { "from": 42, "to": 20, "weight": 35 }
+  ]
+}
