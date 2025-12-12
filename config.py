@@ -1,36 +1,61 @@
-"""
-Configuration constants for Campus Navigator application.
-All dimensions, colors, and application settings.
-"""
-
-# Window dimensions (pixels at 96 DPI)
-WINDOW_WIDTH = 528
-WINDOW_HEIGHT = 528
-CANVAS_WIDTH = 384
-PANEL_WIDTH = 144
+WINDOW_WIDTH = 600
+WINDOW_HEIGHT = 520
+CANVAS_WIDTH = 600
+CANVAS_HEIGHT = 320  # Canvas on top
+CONTROL_PANEL_WIDTH = 135  # 30% of 450px centered panel
+RESULTS_PANEL_WIDTH = 315  # 70% of 450px centered panel
+BOTTOM_PANEL_HEIGHT = 200
 
 # Canvas drawing settings
-CANVAS_PADDING = 30  # Padding around graph in pixels
+CANVAS_PADDING = 30
 NODE_RADIUS = 8  # Circle radius for nodes
 EDGE_WIDTH = 2  # Default edge line width
 EDGE_HIGHLIGHT_WIDTH = 4  # Highlighted path edge width
 
 # Colors (R, G, B) tuples
-COLOR_NODE_DEFAULT = (100, 100, 100)  # Gray
-COLOR_NODE_HIGHLIGHT = (255, 0, 0)  # Red
-COLOR_NODE_START = (0, 200, 0)  # Green
-COLOR_NODE_END = (255, 0, 0)  # Red (same as highlight)
-COLOR_EDGE_DEFAULT = (150, 150, 150)  # Light gray
-COLOR_EDGE_HIGHLIGHT = (255, 100, 0)  # Orange
-COLOR_BACKGROUND = (255, 255, 255)  # White
-COLOR_ERROR_TEXT = (200, 0, 0)  # Red for error messages
+COLOR_NODE_DEFAULT = (84, 110, 122)  # Blue-gray (buildings)
+COLOR_NODE_HIGHLIGHT = (38, 166, 154)  # Teal (path)
+COLOR_NODE_START = (67, 160, 71)  # Green (start)
+COLOR_NODE_END = (244, 67, 54)  # Red (end)
+COLOR_NODE_JUNCTION = (158, 158, 158)  # Gray (junction)
+COLOR_EDGE_DEFAULT = (176, 190, 197)  # Light blue-gray
+COLOR_EDGE_HIGHLIGHT = (38, 166, 154)  # Teal
+COLOR_BACKGROUND = (236, 239, 241)  # Light gray
+COLOR_CANVAS_BG = (255, 255, 255)  # White canvas
+COLOR_ERROR_TEXT = (211, 47, 47)  # Red for errors
 
 # Text colors (Qt uses different format, we'll convert as needed)
-COLOR_TEXT_NORMAL = (0, 0, 0)  # Black
-COLOR_TEXT_SUCCESS = (0, 150, 0)  # Green
+COLOR_TEXT_NORMAL = (55, 71, 79)  # Dark blue-gray
+COLOR_TEXT_SUCCESS = (67, 160, 71)  # Green
+COLOR_TEXT_HEADER = (55, 71, 79)  # Dark blue-gray
+
+# UI Colors (for Qt stylesheets - RGB format)
+PRIMARY_COLOR = "#37474F"  # Dark blue-gray
+SECONDARY_COLOR = "#546E7A"  # Blue-gray
+ACCENT_COLOR = "#26A69A"  # Teal
+BACKGROUND_COLOR = "#ECEFF1"  # Light gray
+BUTTON_HOVER = "#455A64"  # Darker blue-gray
+TEXT_COLOR = "#37474F"  # Dark blue-gray
+SUCCESS_COLOR = "#43A047"  # Green
+ERROR_COLOR = "#D32F2F"  # Red
 
 # Data file path
 GRAPH_DATA_FILE = "data/campus_graph.json"
+
+# Node ID to Letter mapping
+NODE_LETTER_MAP = {
+    0: 'A',
+    5: 'B',
+    16: 'C',
+    16.1: 'D',
+    17: 'E',
+    18: 'F',
+    19: 'G',
+    20: 'H',
+    41: 'I',
+    42: 'J'
+
+}
 
 # Error messages
 ERROR_SAME_LOCATION = "Start and destination cannot be the same"

@@ -1,51 +1,40 @@
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QPainter, QPen, QBrush, QColor
+from PyQt5.QtGui import QPainter, QPen, QBrush, QColor, QFont
 from PyQt5.QtCore import Qt, QPoint
 from typing import List, Tuple, Optional
 from models.graph import Graph
 import config
 
-# TODO: Graph appears stretched, need to check scaling logic
 
 class GraphCanvas(QWidget):
 
     def __init__(self, graph: Graph, parent=None):
         """
         Initialize the canvas.
-
-        Args:
-            graph: Graph object containing nodes and edges
-            parent: Parent widget
         """
         super().__init__(parent)
         self.graph = graph
         self.highlighted_path: Optional[List[int]] = None
 
-        # Set fixed size
         self.setFixedSize(config.CANVAS_WIDTH, config.CANVAS_HEIGHT)
 
-        # Calculate coordinate scaling parameters
         self._calculate_scaling()
 
     def _calculate_scaling(self) -> None:
         """
         Calculate scaling parameters to fit graph coordinates onto canvas.
-        Maintains aspect ratio and centers the graph with padding.
+        Maintains aspect ratio and centers the grap.
         """
-        # Get coordinate bounds from graph
         min_x, max_x, min_y, max_y = self.graph.get_coordinate_bounds()
 
-        # Calculate coordinate ranges
         coord_width = max_x - min_x
         coord_height = max_y - min_y
 
-        # Avoid division by zero
         if coord_width == 0:
             coord_width = 1
         if coord_height == 0:
             coord_height = 1
 
-        # Available drawing area (accounting for padding)
         draw_width = config.CANVAS_WIDTH - (2 * config.CANVAS_PADDING)
         draw_height = config.CANVAS_HEIGHT - (2 * config.CANVAS_PADDING)
 
@@ -54,13 +43,11 @@ class GraphCanvas(QWidget):
         scale_y = draw_height / coord_height
 
         # Use smaller scale to maintain aspect ratio
-        self.scale = scale_x
+        self.scale = min(scale_x, scale_y)
 
-        # Store bounds for transformation
         self.min_x = min_x
         self.min_y = min_y
 
-        # Calculate offsets to center the graph
         scaled_width = coord_width * self.scale
         scaled_height = coord_height * self.scale
         self.offset_x = config.CANVAS_PADDING + (draw_width - scaled_width) / 2
@@ -69,13 +56,6 @@ class GraphCanvas(QWidget):
     def _scale_coordinates(self, x: float, y: float) -> Tuple[int, int]:
         """
         Convert graph coordinates to canvas pixel coordinates.
-
-        Args:
-            x: X coordinate from graph
-            y: Y coordinate from graph
-
-        Returns:
-            Tuple of (canvas_x, canvas_y) in pixels
         """
         canvas_x = int((x - self.min_x) * self.scale + self.offset_x)
         canvas_y = int((y - self.min_y) * self.scale + self.offset_y)
@@ -92,38 +72,42 @@ class GraphCanvas(QWidget):
         self.update()  # Trigger repaint
 
     def clear_highlights(self) -> None:
-        """Clear all path highlights."""
         self.highlighted_path = None
         self.update()  # Trigger repaint
 
     def paintEvent(self, event):
-        """
-        Paint the graph on the canvas.
-        Called automatically by Qt when widget needs to be redrawn.
-
-        Args:
-            event: Paint event
-        """
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.TextAntialiasing)
 
-        # Fill background
-        painter.fillRect(self.rect(), QColor(*config.COLOR_BACKGROUND))
+        painter.fillRect(self.rect(), QColor(*config.COLOR_CANVAS_BG))
 
-        # Draw edges first (so nodes appear on top)
+        self._draw_grid(painter)
+
         self._draw_edges(painter)
 
         # Draw nodes
         self._draw_nodes(painter)
 
-    def _draw_edges(self, painter: QPainter) -> None:
+    def _draw_grid(self, painter: QPainter) -> None:
         """
-        Draw all edges in the graph.
+        Draw grid lines on the canvas background.
+        Adds grid line visual appearance.
 
-        Args:
-            painter: QPainter object for drawing
         """
-        # Track drawn edges to avoid duplicates (undirected graph)
+        # Set grid line color (very light gray)
+        grid_color = QColor(220, 220, 220, 100)  # Light gray with transparency
+        painter.setPen(QPen(grid_color, 1))
+
+        grid_spacing = 30
+        for x in range(0, config.CANVAS_WIDTH, grid_spacing):
+            painter.drawLine(x, 0, x, config.CANVAS_HEIGHT)
+
+        for y in range(0, config.CANVAS_HEIGHT, grid_spacing):
+            painter.drawLine(0, y, config.CANVAS_WIDTH, y)
+
+    def _draw_edges(self, painter: QPainter) -> None:
+
         drawn_edges = set()
 
         for node_id, neighbors in self.graph.adjacency.items():
@@ -170,17 +154,14 @@ class GraphCanvas(QWidget):
                 painter.drawLine(node_x, node_y, neighbor_x, neighbor_y)
 
     def _draw_nodes(self, painter: QPainter) -> None:
-        """
-        Draw all nodes in the graph.
-
-        Args:
-            painter: QPainter object for drawing
-        """
         for node in self.graph.get_all_nodes():
             node_x, node_y = self._scale_coordinates(node.x, node.y)
 
             # Determine node color based on role in path
-            color = config.COLOR_NODE_DEFAULT
+            if node.id == 17:  # Junction node
+                color = config.COLOR_NODE_JUNCTION
+            else:
+                color = config.COLOR_NODE_DEFAULT
 
             if self.highlighted_path:
                 if node.id == self.highlighted_path[0]:
@@ -193,16 +174,41 @@ class GraphCanvas(QWidget):
                     # Intermediate node in path
                     color = config.COLOR_NODE_HIGHLIGHT
 
-            # Draw node circle
+            # Draw node shadow for depth
+            shadow_offset = 2
             painter.setPen(Qt.NoPen)
+            painter.setBrush(QBrush(QColor(0, 0, 0, 30)))
+            painter.drawEllipse(QPoint(node_x + shadow_offset, node_y + shadow_offset),
+                                config.NODE_RADIUS,
+                                config.NODE_RADIUS)
+
+            # Draw node circle
+            painter.setPen(QPen(QColor(255, 255, 255), 2))  # White border
             painter.setBrush(QBrush(QColor(*color)))
             painter.drawEllipse(QPoint(node_x, node_y),
                                 config.NODE_RADIUS,
                                 config.NODE_RADIUS)
 
-            # Draw node label (ID)
             painter.setPen(QColor(*config.COLOR_TEXT_NORMAL))
-            # Offset text slightly below the node
-            text_y = node_y + config.NODE_RADIUS + 12
-            painter.drawText(node_x - 10, text_y, 20, 15,
-                             Qt.AlignCenter, str(node.id))
+            font = QFont()
+            font.setPointSize(9)
+            font.setFamily("Segoe UI")
+            painter.setFont(font)
+
+            # Format: [Building Name]
+            name_text = f"[{node.name}]"
+            text_width = painter.fontMetrics().horizontalAdvance(name_text)
+            text_x = node_x - text_width - config.NODE_RADIUS - 5
+            text_y = node_y + 4
+            painter.drawText(text_x, text_y, name_text)
+
+            # Draw letter on right side of circle (bold, larger)
+            letter_font = QFont()
+            letter_font.setPointSize(10)
+            letter_font.setBold(True)
+            letter_font.setFamily("Segoe UI")
+            painter.setFont(letter_font)
+
+            letter_x = node_x + config.NODE_RADIUS + 5
+            letter_y = node_y + 5
+            painter.drawText(letter_x, letter_y, node.letter)

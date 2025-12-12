@@ -1,13 +1,14 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QComboBox, QPushButton,
-                             QLabel, QFrame)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
+                             QPushButton, QLabel)
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtGui import QFont
+from typing import Dict
 from models.graph import Graph
 from utils.helpers import format_dropdown_item, parse_dropdown_selection
 import config
 
 
 class ControlPanel(QWidget):
+    """Control panel for selecting locations."""
 
     # Signals
     calculate_clicked = pyqtSignal()
@@ -24,31 +25,70 @@ class ControlPanel(QWidget):
         super().__init__(parent)
         self.graph = graph
 
+        # Build letter to ID mapping
+        self.letter_to_id: Dict[str, int] = {}
+        for node in graph.get_all_nodes():
+            self.letter_to_id[node.letter] = node.id
+
         # Set fixed width
-        self.setFixedWidth(config.PANEL_WIDTH)
+        self.setFixedWidth(config.CONTROL_PANEL_WIDTH)
 
         # Setup UI components
         self._setup_ui()
 
     def _setup_ui(self) -> None:
+        """Setup all UI components and layout."""
         layout = QVBoxLayout()
         layout.setSpacing(10)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(15, 15, 15, 15)
 
-        # Title label
-        title = QLabel("Campus Navigator")
-        title_font = QFont()
-        title_font.setPointSize(10)
-        title_font.setBold(True)
-        title.setFont(title_font)
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
-
-        # Add spacing
-        layout.addSpacing(10)
+        # Set panel background
+        self.setStyleSheet(f"""
+            QWidget {{
+                background-color: {config.BACKGROUND_COLOR};
+            }}
+            QLabel {{
+                color: {config.TEXT_COLOR};
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 11pt;
+            }}
+            QComboBox {{
+                background-color: white;
+                border: 2px solid {config.SECONDARY_COLOR};
+                border-radius: 6px;
+                padding: 6px;
+                color: {config.TEXT_COLOR};
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 10pt;
+            }}
+            QComboBox:hover {{
+                border: 2px solid {config.ACCENT_COLOR};
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 20px;
+            }}
+            QPushButton {{
+                background-color: {config.PRIMARY_COLOR};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 6px;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-size: 10pt;
+                font-weight: bold;
+                min-height: 10px;
+            }}
+            QPushButton:hover {{
+                background-color: {config.BUTTON_HOVER};
+            }}
+            QPushButton:pressed {{
+                background-color: {config.ACCENT_COLOR};
+            }}
+        """)
 
         # Start location label
-        start_label = QLabel("Start Location:")
+        start_label = QLabel("Starting Location")
         start_label.setWordWrap(True)
         layout.addWidget(start_label)
 
@@ -58,10 +98,10 @@ class ControlPanel(QWidget):
         layout.addWidget(self.start_dropdown)
 
         # Add spacing
-        layout.addSpacing(5)
+        layout.addSpacing(8)
 
         # Destination label
-        dest_label = QLabel("Destination:")
+        dest_label = QLabel("Destination")
         dest_label.setWordWrap(True)
         layout.addWidget(dest_label)
 
@@ -71,55 +111,27 @@ class ControlPanel(QWidget):
         layout.addWidget(self.dest_dropdown)
 
         # Add spacing
-        layout.addSpacing(10)
+        layout.addSpacing(8)
+
+        # Buttons layout (side by side)
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(15)
 
         # Calculate button
-        self.calc_button = QPushButton("Calculate Route")
+        self.calc_button = QPushButton("Calculate")
         self.calc_button.clicked.connect(self.calculate_clicked.emit)
-        layout.addWidget(self.calc_button)
+        self.calc_button.setCursor(Qt.PointingHandCursor)
+        self.calc_button.setMinimumWidth(55)
+        buttons_layout.addWidget(self.calc_button)
 
         # Reset button
         self.reset_button = QPushButton("Reset")
         self.reset_button.clicked.connect(self.reset_clicked.emit)
-        layout.addWidget(self.reset_button)
+        self.reset_button.setCursor(Qt.PointingHandCursor)
+        self.reset_button.setMinimumWidth(55)
+        buttons_layout.addWidget(self.reset_button)
 
-        # Add spacing
-        layout.addSpacing(15)
-
-        # Separator line
-        separator = QFrame()
-        separator.setFrameShape(QFrame.HLine)
-        separator.setFrameShadow(QFrame.Sunken)
-        layout.addWidget(separator)
-
-        # Add spacing
-        layout.addSpacing(10)
-
-        # Results section label
-        results_label = QLabel("Results:")
-        results_font = QFont()
-        results_font.setBold(True)
-        results_label.setFont(results_font)
-        layout.addWidget(results_label)
-
-        # ETA display label
-        self.eta_label = QLabel("")
-        self.eta_label.setWordWrap(True)
-        self.eta_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        layout.addWidget(self.eta_label)
-
-        # Path display label
-        self.path_label = QLabel("")
-        self.path_label.setWordWrap(True)
-        self.path_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        layout.addWidget(self.path_label)
-
-        # Error/status label
-        self.status_label = QLabel("")
-        self.status_label.setWordWrap(True)
-        self.status_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.status_label.setStyleSheet(f"color: rgb{config.COLOR_ERROR_TEXT};")
-        layout.addWidget(self.status_label)
+        layout.addLayout(buttons_layout)
 
         # Add stretch to push everything to the top
         layout.addStretch()
@@ -136,9 +148,9 @@ class ControlPanel(QWidget):
         # Get all nodes sorted by ID
         nodes = self.graph.get_all_nodes()
 
-        # Add each node in "ID - Name" format
+        # Add each node in "Letter - Name" format
         for node in nodes:
-            item_text = format_dropdown_item(node.id, node.name)
+            item_text = format_dropdown_item(node.letter, node.name)
             dropdown.addItem(item_text)
 
     def get_selected_start(self) -> int:
@@ -152,7 +164,8 @@ class ControlPanel(QWidget):
             ValueError: If selection is invalid
         """
         text = self.start_dropdown.currentText()
-        return parse_dropdown_selection(text)
+        letter = parse_dropdown_selection(text)
+        return self.letter_to_id[letter]
 
     def get_selected_destination(self) -> int:
         """
@@ -165,11 +178,5 @@ class ControlPanel(QWidget):
             ValueError: If selection is invalid
         """
         text = self.dest_dropdown.currentText()
-        return parse_dropdown_selection(text)
-
-
-    def clear_display(self) -> None:
-
-        self.eta_label.clear()
-        self.path_label.clear()
-        self.status_label.clear()
+        letter = parse_dropdown_selection(text)
+        return self.letter_to_id[letter]

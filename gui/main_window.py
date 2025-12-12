@@ -1,14 +1,18 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtCore import Qt
 from models.graph import Graph
 from models.pathfinder import PathFinder
 from gui.graph_canvas import GraphCanvas
 from gui.control_panel import ControlPanel
+from gui.results_panel import ResultsPanel
 from utils.helpers import format_eta_display, format_path_display, calculate_eta
 import config
+
 
 class MainWindow(QMainWindow):
 
     def __init__(self):
+        """Initialize the main window."""
         super().__init__()
 
         # Load graph data
@@ -17,7 +21,6 @@ class MainWindow(QMainWindow):
             self.graph.load_from_json(config.GRAPH_DATA_FILE)
         except Exception as e:
             print(f"Error loading graph: {e}")
-            # You might want to show an error dialog here
             raise
 
         # Create pathfinder
@@ -34,31 +37,72 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Campus Navigator")
         self.setFixedSize(config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
 
-        # Create central widget
+        self.setStyleSheet(f"background-color: {config.BACKGROUND_COLOR};")
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
 
-        # Create main layout (horizontal)
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        # Create canvas (left side)
         self.canvas = GraphCanvas(self.graph)
-        layout.addWidget(self.canvas)
+        # Add subtle shadow/border around canvas
+        self.canvas.setStyleSheet("""
+            border: 2px solid #B0BEC5;
+            background-color: white;
+        """)
+        main_layout.addWidget(self.canvas, alignment=Qt.AlignCenter)
 
-        # Create control panel (right side)
+        bottom_wrapper = QHBoxLayout()
+        bottom_wrapper.setContentsMargins(0, 0, 0, 0)
+        bottom_wrapper.setSpacing(0)
+
+        bottom_wrapper.addStretch()
+
+        # Create bottom panel layout (horizontal: controls left, results right)
+        bottom_panel_layout = QHBoxLayout()
+        bottom_panel_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_panel_layout.setSpacing(0)
+
+        # Create control panel (bottom-left)
         self.control_panel = ControlPanel(self.graph)
-        layout.addWidget(self.control_panel)
+        bottom_panel_layout.addWidget(self.control_panel)
 
-        # Set layout
-        central_widget.setLayout(layout)
+        # Create results panel (bottom-right)
+        self.results_panel = ResultsPanel()
+        bottom_panel_layout.addWidget(self.results_panel)
+
+        # Create bottom panel widget (centered, ~450px wide)
+        bottom_panel_widget = QWidget()
+        bottom_panel_widget.setLayout(bottom_panel_layout)
+        bottom_panel_widget.setFixedSize(470, config.BOTTOM_PANEL_HEIGHT)
+        # Add subtle shadow/border around bottom panel
+        bottom_panel_widget.setStyleSheet(f"""
+            border: 2px solid #B0BEC5;
+            border-radius: 8px;
+            background-color: {config.BACKGROUND_COLOR};
+        """)
+
+        bottom_wrapper.addWidget(bottom_panel_widget)
+
+        bottom_wrapper.addStretch()
+
+        bottom_wrapper_widget = QWidget()
+        bottom_wrapper_widget.setLayout(bottom_wrapper)
+        bottom_wrapper_widget.setFixedHeight(config.BOTTOM_PANEL_HEIGHT)
+
+        main_layout.addWidget(bottom_wrapper_widget)
+
+        central_widget.setLayout(main_layout)
 
     def _connect_signals(self) -> None:
+        """Connect signals from control panel to handler methods."""
         self.control_panel.calculate_clicked.connect(self._on_calculate_clicked)
         self.control_panel.reset_clicked.connect(self._on_reset_clicked)
 
     def _on_calculate_clicked(self) -> None:
+        """Handle calculate button click."""
         try:
             # Get selected nodes
             start_id = self.control_panel.get_selected_start()
@@ -66,7 +110,7 @@ class MainWindow(QMainWindow):
 
             # Validate: check if same location
             if start_id == dest_id:
-                self.control_panel.display_error(config.ERROR_SAME_LOCATION)
+                self.results_panel.display_error(config.ERROR_SAME_LOCATION)
                 self.canvas.clear_highlights()
                 return
 
@@ -75,42 +119,43 @@ class MainWindow(QMainWindow):
 
             # Check if path exists
             if path is None or total_weight == float('inf'):
-                self.control_panel.display_error(config.ERROR_NO_PATH)
+                self.results_panel.display_error(config.ERROR_NO_PATH)
                 self.canvas.clear_highlights()
                 return
 
             # Calculate ETA
             eta = calculate_eta(total_weight)
 
-            # Get building names for path
+            # Get building names for path (using letters)
             path_names = []
             for node_id in path:
                 node = self.graph.get_node(node_id)
                 if node:
-                    path_names.append(node.name)
+                    path_names.append(node.letter)
 
             # Format display strings
             eta_text = format_eta_display(eta)
             path_text = format_path_display(path_names)
 
             # Display results
-            self.control_panel.display_result(eta_text, path_text)
+            self.results_panel.display_result(eta_text, path_text)
 
             # Highlight path on canvas
             self.canvas.highlight_path(path)
 
         except ValueError as e:
             # Handle invalid dropdown selection
-            self.control_panel.display_error(config.ERROR_INVALID_SELECTION)
+            self.results_panel.display_error(config.ERROR_INVALID_SELECTION)
             self.canvas.clear_highlights()
         except Exception as e:
             # Handle unexpected errors
-            self.control_panel.display_error(f"Error: {str(e)}")
+            self.results_panel.display_error(f"Error: {str(e)}")
             self.canvas.clear_highlights()
 
     def _on_reset_clicked(self) -> None:
+        """Handle reset button click."""
         # Clear display
-        self.control_panel.clear_display()
+        self.results_panel.clear_display()
 
         # Clear canvas highlights
         self.canvas.clear_highlights()
