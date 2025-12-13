@@ -196,7 +196,7 @@ class GraphCanvas(QWidget):
             painter.setFont(font)
 
             # Format: [Building Name]
-            name_text = f"[{node.name}]"
+            name_text = f"{node.name}"
             text_width = painter.fontMetrics().horizontalAdvance(name_text)
             text_x = node_x - text_width - config.NODE_RADIUS - 5
             text_y = node_y + 4

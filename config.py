@@ -45,15 +45,16 @@ GRAPH_DATA_FILE = "data/campus_graph.json"
 # Node ID to Letter mapping
 NODE_LETTER_MAP = {
     0: 'A',
-    5: 'B',
-    16: 'C',
-    16.1: 'D',
-    17: 'E',
-    18: 'F',
-    19: 'G',
-    20: 'H',
-    41: 'I',
-    42: 'J'
+    1: 'B',
+    5: 'C',
+    16: 'D',
+    16.1: 'E',
+    17: 'F',
+    18: 'G',
+    19: 'H',
+    20: 'I',
+    41: 'J',
+    42: 'K'
 
 }
 
