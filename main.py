@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QApplication, QMessageBox
 from gui.main_window import MainWindow
 import config
 
-
 def main():
     # Create Qt application
     app = QApplication(sys.argv)
